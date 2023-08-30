@@ -43,9 +43,9 @@ state = initialState
     // It it not necessary to have a state to track the "Coordinates (2, 2)" message for the user.
     // You can use the `getXY` helper above to obtain the coordinates, and then `getXYMessage`
     // returns the fully constructed string.
-    const [x,y] = this.getXY()
-    console.log(x,y)
-    return (`Coordinates ${x},${y}`)
+    let coordinates = this.getXY()
+   console.log(coordinates)
+   return (`Coordinates ${coordinates[0]},${coordinates[1]}`)
   }
 
   reset = () => {
@@ -74,36 +74,56 @@ state = initialState
   move = (evt) => {
     // This event handler can use the helper above to obtain a new index for the "B",
     // and change any states accordingly.
-    const direction = evt.target.id
-    const nextIndex = this.getNextIndex(direction)
-    if(nextIndex !== this.props.index){
-     this.setState({
-      ...this.state,
-      steps: this.state.steps + 1,
-      message: initialMessage,
-      index: nextIndex
-     })
-    }else{
-     this.props.setMessage(`You can't go ${direction}`)
-    }
     
-  }
+      const direction = evt.target.id;
+      const nextIndex = this.getNextIndex(direction);
+  
+      if (nextIndex !== this.state.index) {
+        this.setState((prevState) => ({
+          steps: prevState.steps + 1,
+          message: '',
+          index: nextIndex,
+        }));
+      } else {
+        this.setState({ message: `You can't go ${direction}` });
+      }
+    }
 
   onChange = (evt) => {
+    const emailValue = evt.target.value; 
+    this.setState({ email: emailValue });
   }
 
   onSubmit = (evt) => {
     evt.preventDefault();
+    const submitInfo = {
+      x: this.getXY()[0],
+      y: this.getXY()[1],
+      steps: this.state.steps,
+      email: this.state.email, 
+    };
+
+    axios
+      .post(URL, submitInfo)
+      .then(res => {
+        console.log(res.data.message);
+        this.setState({ message: res.data.message }); 
+      })
+      .catch(err => console.error(err))
+      .finally(() => {
+        this.setState({ email: initialState.email })
+      });
   }
 
   render() {
     console.log(this.state)
+    console.log(this.state.message)
     const { className } = this.props
     return (
       <div id="wrapper" className={className}>
         <div className="info">
-          <h3 id="coordinates">Coordinates (2, 2)</h3>
-          <h3 id="steps">You moved 0 times</h3>
+          <h3 id="coordinates">{this.getXYMessage()}</h3>
+          <h3 id="steps">You moved {this.state.steps} times</h3>
         </div>
         <div id="grid">
           {
@@ -115,7 +135,7 @@ state = initialState
           }
         </div>
         <div className="info">
-          <h3 id="message">{this.message}</h3>
+          <h3 id="message">{this.state.message}</h3>
         </div>
         <div id="keypad">
           <button id="left" onClick={this.move}>LEFT</button>
@@ -124,8 +144,8 @@ state = initialState
           <button id="down" onClick={this.move}>DOWN</button>
           <button id="reset" onClick={this.reset}>reset</button>
         </div>
-        <form>
-          <input id="email" type="email" placeholder="type email"></input>
+        <form onSubmit={this.onSubmit}>
+          <input id="email" type="email" placeholder="type email" onChange={this.onChange}></input>
           <input id="submit" type="submit"></input>
         </form>
       </div>
