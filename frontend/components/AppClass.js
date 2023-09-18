@@ -44,8 +44,7 @@ state = initialState
     // You can use the `getXY` helper above to obtain the coordinates, and then `getXYMessage`
     // returns the fully constructed string.
     let coordinates = this.getXY()
-   console.log(coordinates)
-   return (`Coordinates ${coordinates[0]},${coordinates[1]}`)
+   return (`Coordinates (${coordinates[0]}, ${coordinates[1]})`)
   }
 
   reset = () => {
@@ -91,7 +90,7 @@ state = initialState
 
   onChange = (evt) => {
     const emailValue = evt.target.value; 
-    this.setState({ email: emailValue });
+    this.setState({ ...this.state, email: emailValue });
   }
 
   onSubmit = (evt) => {
@@ -103,27 +102,33 @@ state = initialState
       email: this.state.email, 
     };
 
+    let holdMessage
+
     axios
       .post(URL, submitInfo)
       .then(res => {
-        console.log(res.data.message);
-        this.setState({ message: res.data.message }); 
+        holdMessage = res.data.message
+        this.setState({ ...this.state, message: res.data.message }); 
       })
-      .catch(err => console.error(err))
+
+      .catch(err => {
+        holdMessage = err.response.data.message
+        this.setState({ ...this.state, message: err.response.data.message })
+      })
       .finally(() => {
-        this.setState({ email: initialState.email })
+        console.log('hello from finally')
+        this.setState({ ...this.state, message: holdMessage, email: initialState.email })
       });
   }
 
   render() {
-    console.log(this.state)
-    console.log(this.state.message)
+
     const { className } = this.props
     return (
       <div id="wrapper" className={className}>
         <div className="info">
           <h3 id="coordinates">{this.getXYMessage()}</h3>
-          <h3 id="steps">You moved {this.state.steps} times</h3>
+          <h3 id="steps">You moved {this.state.steps} {this.state.steps === 1 ? "time" : "times"}</h3>
         </div>
         <div id="grid">
           {
@@ -145,7 +150,7 @@ state = initialState
           <button id="reset" onClick={this.reset}>reset</button>
         </div>
         <form onSubmit={this.onSubmit}>
-          <input id="email" type="email" placeholder="type email" onChange={this.onChange}></input>
+          <input id="email" type="email" placeholder="type email" onChange={this.onChange} value={this.state.email}></input>
           <input id="submit" type="submit"></input>
         </form>
       </div>

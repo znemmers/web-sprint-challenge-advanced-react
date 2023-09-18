@@ -8,6 +8,10 @@ const initialFormValues = {
    initialSteps: 0,
    initialIndex: 4, 
 }
+
+const initialErrors = {
+  initialEmail: ''
+}
 // the index the "B" is at
 
 
@@ -43,8 +47,7 @@ export default function AppFunctional(props) {
     // You can use the `getXY` helper above to obtain the coordinates, and then `getXYMessage`
     // returns the fully constructed string.
    let coordinates = getXY()
-   console.log(coordinates)
-   return (`Coordinates ${coordinates[0]},${coordinates[1]}`)
+   return (`Coordinates (${coordinates[0]}, ${coordinates[1]})`)
   }
 
   function reset() {
@@ -100,21 +103,24 @@ export default function AppFunctional(props) {
   function onSubmit(evt) {
     // Use a POST request to send a payload to the server.
     evt.preventDefault()
+    let holdMessage
     axios
       .post('http://localhost:9000/api/result', submitInfo)
       .then(res => {
-        console.log(res.data.message)
+        holdMessage = res.data.message
         setMessage(res.data.message) 
       })
-      .catch(err => console.error(err)) 
-      .finally(() => setEmail(''))
+      .catch(err => {
+        setMessage(err.response.data.message)
+      }) 
+      .finally(() => setEmail(''), setMessage(holdMessage) )
   }
 
   return (
     <div id="wrapper" className={props.className}>
       <div className="info">
         <h3 id="coordinates">{getXYMessage()}</h3>
-        <h3 id="steps">You moved {steps} times</h3>
+        <h3 id="steps">You moved {steps} {steps === 1 ? "time" : "times"}</h3>
       </div>
       <div id="grid">
         {
